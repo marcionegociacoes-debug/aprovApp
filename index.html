@@ -3,160 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meta 90% Militar</title>
+<title>aprovApp</title>
 <link rel="manifest" href="manifest.json">
 <style>
-body{
-background:#0a0f1a;
-color:#fff;
-font-family:Arial;
-text-align:center;
-}
+body{background:#0a0f1a;color:#fff;font-family:Arial;text-align:center;}
 h1{color:#00e5ff;}
-.card{
-background:#111827;
-margin:15px auto;
-padding:20px;
-border-radius:12px;
-width:95%;
-max-width:650px;
-}
-textarea{
-width:100%;
-height:140px;
-background:#0d1117;
-color:#00ff90;
-border:1px solid #333;
-padding:10px;
-border-radius:8px;
-}
-button{
-padding:8px 12px;
-margin:4px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-font-weight:bold;
-}
+.card{background:#111827;margin:15px auto;padding:20px;border-radius:12px;width:95%;max-width:700px;}
+textarea{width:100%;height:200px;background:#0d1117;color:#00ff90;border:1px solid #333;padding:10px;border-radius:8px;}
+button{padding:8px 12px;margin:4px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;}
 .start{background:#00c853;}
 .pause{background:#d50000;}
 .done{background:#2962ff;}
 .save{background:#ff6d00;}
-.timer{font-size:20px;margin:6px;}
-.alerta{color:#ffd600;}
-.meta{color:#00ff90;}
-.sectionTitle{margin-top:10px;font-weight:bold;}
+.timer{font-size:22px;margin:8px;}
+.green{color:#00ff90;}
+.red{color:#ff5252;}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px;}
+.day{padding:8px;background:#1f2937;border-radius:6px;font-size:12px;}
+.doneDay{background:#00c853;}
+.today{border:2px solid #ffd600;}
 </style>
 </head>
 <body>
 
-<h1>META 90% – MODO MILITAR</h1>
-<div id="contadorProva" class="alerta"></div>
+<h1>aprovApp – MODO MILITAR</h1>
 
 <div class="card">
-<h3>📅 BLOCO DE CRONOGRAMA (1 linha = 1 dia)</h3>
-<textarea id="cronogramaInput"></textarea>
-<br>
-<button class="save" onclick="salvarCronograma()">SALVAR</button>
+<h3>📋 Cronograma</h3>
+<textarea id="cronograma"></textarea>
+<button class="save" onclick="salvar()">Salvar</button>
 </div>
 
 <div class="card">
-<h2 id="dia"></h2>
+<h2 id="diaAtual"></h2>
 <p id="atividade"></p>
+
+<div class="timer">🔢 Matemática <span id="mat"></span></div>
+<button class="start" onclick="start('mat',11700)">Iniciar</button>
+<button class="pause" onclick="pause('mat')">Pausar</button>
+
+<div class="timer">📚 Português <span id="port"></span></div>
+<button class="start" onclick="start('port',5400)">Iniciar</button>
+<button class="pause" onclick="pause('port')">Pausar</button>
+
+<div class="timer">🔁 Revisão <span id="rev"></span></div>
+<button class="start" onclick="start('rev',900)">Iniciar</button>
+<button class="pause" onclick="pause('rev')">Pausar</button>
+
+<button class="done" onclick="concluirDia()">Concluir Dia</button>
+
+<p id="status"></p>
 </div>
 
 <div class="card">
-<div class="sectionTitle">🔢 Matemática (3h)</div>
-<div class="timer" id="mat">03:00:00</div>
-<button class="start" onclick="start('mat',10800)">INICIAR</button>
-<button class="pause" onclick="pause('mat')">PAUSAR</button>
-<button class="done" onclick="concluir('mat',10800)">CONCLUIR</button>
-
-<div class="sectionTitle">📚 Português (1h30)</div>
-<div class="timer" id="port">01:30:00</div>
-<button class="start" onclick="start('port',5400)">INICIAR</button>
-<button class="pause" onclick="pause('port')">PAUSAR</button>
-<button class="done" onclick="concluir('port',5400)">CONCLUIR</button>
-
-<div class="sectionTitle">🔁 Revisão (30min)</div>
-<div class="timer" id="rev">00:30:00</div>
-<button class="start" onclick="start('rev',1800)">INICIAR</button>
-<button class="pause" onclick="pause('rev')">PAUSAR</button>
-<button class="done" onclick="concluir('rev',1800)">CONCLUIR</button>
-</div>
-
-<div class="card">
-<h3>Horas Extras Totais</h3>
-<p id="extra" class="meta">0h 0min</p>
+<h3>📅 Calendário de Cumprimento</h3>
+<div class="calendar" id="calendar"></div>
 </div>
 
 <script>
 
 const inicio = new Date("2026-02-22");
-const prova = new Date("2026-03-21T08:00:00");
-
-let cronograma = [];
 let intervalos = {};
-
-function salvarCronograma(){
-let texto = document.getElementById("cronogramaInput").value;
-cronograma = texto.split("\n");
-localStorage.setItem("cronograma", JSON.stringify(cronograma));
-alert("Cronograma salvo.");
-atualizarDia();
-}
-
-function carregarCronograma(){
-let salvo = localStorage.getItem("cronograma");
-if(salvo){
-cronograma = JSON.parse(salvo);
-document.getElementById("cronogramaInput").value =
-cronograma.join("\n");
-}
-}
-
-function atualizarDia(){
-if(cronograma.length===0) return;
-let hoje = new Date();
-let diff = Math.floor((hoje - inicio)/(1000*60*60*24));
-if(diff<0) diff=0;
-if(diff>=cronograma.length) diff=cronograma.length-1;
-
-document.getElementById("dia").innerText =
-"Dia "+(diff+1);
-
-document.getElementById("atividade").innerText =
-cronograma[diff];
-}
-
-function atualizarProva(){
-let agora = new Date();
-let diff = prova - agora;
-let dias = Math.floor(diff/(1000*60*60*24));
-document.getElementById("contadorProva").innerText =
-"FALTAM "+dias+" DIAS PARA A PROVA";
-}
+let tempoEstudadoHoje = 0;
 
 function formatar(seg){
 let h=Math.floor(seg/3600);
 let m=Math.floor((seg%3600)/60);
 let s=seg%60;
-return (h<10?"0":"")+h+":"+
-       (m<10?"0":"")+m+":"+
-       (s<10?"0":"")+s;
+return (h<10?"0":"")+h+":"+(m<10?"0":"")+m+":"+(s<10?"0":"")+s;
 }
 
 function start(id,meta){
 if(!intervalos[id]){
-let tempo = parseInt(localStorage.getItem(id)) || meta;
-intervalos[id] = setInterval(()=>{
+let tempo=parseInt(localStorage.getItem(id))||meta;
+intervalos[id]=setInterval(()=>{
 if(tempo>0){
 tempo--;
+tempoEstudadoHoje++;
 document.getElementById(id).innerText=formatar(tempo);
 localStorage.setItem(id,tempo);
-}else{
-clearInterval(intervalos[id]);
-intervalos[id]=null;
 }
 },1000);
 }
@@ -167,45 +92,59 @@ clearInterval(intervalos[id]);
 intervalos[id]=null;
 }
 
-function concluir(id,meta){
-pause(id);
-let restante = parseInt(localStorage.getItem(id)) || meta;
-let estudado = meta - restante;
-let extra = estudado - meta;
-if(extra>0){
-let acumulado=parseInt(localStorage.getItem("extra"))||0;
-acumulado+=extra;
-localStorage.setItem("extra",acumulado);
+function concluirDia(){
+let minimo=4.5*3600;
+if(tempoEstudadoHoje<minimo){
+document.getElementById("status").innerHTML="<span class='red'>Tempo mínimo não atingido (4h30)</span>";
+return;
 }
-localStorage.setItem(id,0);
-document.getElementById(id).innerText="00:00:00";
-mostrarExtra();
+marcarCalendario();
+document.getElementById("status").innerHTML="<span class='green'>MISSÃO CUMPRIDA</span>";
 }
 
-function mostrarExtra(){
-let acumulado=parseInt(localStorage.getItem("extra"))||0;
-let h=Math.floor(acumulado/3600);
-let m=Math.floor((acumulado%3600)/60);
-document.getElementById("extra").innerText=h+"h "+m+"min";
+function salvar(){
+localStorage.setItem("cronograma",document.getElementById("cronograma").value);
+atualizarDia();
+}
+
+function atualizarDia(){
+let texto=localStorage.getItem("cronograma")||"";
+let linhas=texto.split("\n");
+let hoje=new Date();
+let diff=Math.floor((hoje-inicio)/(1000*60*60*24));
+if(diff<0) diff=0;
+if(diff>=linhas.length) diff=linhas.length-1;
+document.getElementById("diaAtual").innerText="Dia "+(diff+1);
+document.getElementById("atividade").innerText=linhas[diff]||"";
+}
+
+function gerarCalendario(){
+let cal=document.getElementById("calendar");
+cal.innerHTML="";
+for(let i=0;i<28;i++){
+let d=document.createElement("div");
+d.className="day";
+d.innerText=i+1;
+if(localStorage.getItem("done"+i)) d.classList.add("doneDay");
+cal.appendChild(d);
+}
+}
+
+function marcarCalendario(){
+let hoje=new Date();
+let diff=Math.floor((hoje-inicio)/(1000*60*60*24));
+localStorage.setItem("done"+diff,true);
+gerarCalendario();
 }
 
 window.onload=function(){
-carregarCronograma();
 atualizarDia();
-atualizarProva();
-setInterval(atualizarProva,1000);
-
-["mat","port","rev"].forEach(id=>{
-let meta = id==="mat"?10800:id==="port"?5400:1800;
-let tempo = parseInt(localStorage.getItem(id)) || meta;
+gerarCalendario();
+["mat","port","rev"].forEach((id,i)=>{
+let metas=[11700,5400,900];
+let tempo=parseInt(localStorage.getItem(id))||metas[i];
 document.getElementById(id).innerText=formatar(tempo);
 });
-
-mostrarExtra();
-}
-
-if('serviceWorker' in navigator){
-navigator.serviceWorker.register('service-worker.js');
 }
 
 </script>
