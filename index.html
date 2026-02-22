@@ -8,143 +8,139 @@
 <style>
 body{background:#0a0f1a;color:#fff;font-family:Arial;text-align:center;}
 h1{color:#00e5ff;}
-.card{background:#111827;margin:15px auto;padding:20px;border-radius:12px;width:95%;max-width:700px;}
-textarea{width:100%;height:200px;background:#0d1117;color:#00ff90;border:1px solid #333;padding:10px;border-radius:8px;}
-button{padding:8px 12px;margin:4px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;}
-.start{background:#00c853;}
-.pause{background:#d50000;}
-.done{background:#2962ff;}
+.card{background:#111827;margin:15px auto;padding:20px;border-radius:12px;width:95%;max-width:800px;}
+textarea{width:100%;height:180px;background:#0d1117;color:#00ff90;border:1px solid #333;padding:10px;border-radius:8px;}
+button{padding:6px 10px;margin:4px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;}
 .save{background:#ff6d00;}
-.timer{font-size:22px;margin:8px;}
+.nav{background:#2962ff;}
+.restore{background:#00c853;}
+.timer{font-size:18px;margin:5px;}
 .green{color:#00ff90;}
 .red{color:#ff5252;}
 .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px;}
 .day{padding:8px;background:#1f2937;border-radius:6px;font-size:12px;}
 .doneDay{background:#00c853;}
 .today{border:2px solid #ffd600;}
+#countdown{font-size:18px;color:#ffd600;margin-bottom:10px;}
 </style>
 </head>
 <body>
 
 <h1>aprovApp – MODO MILITAR</h1>
+<div id="countdown"></div>
 
 <div class="card">
 <h3>📋 Cronograma</h3>
-<textarea id="cronograma"></textarea>
-<button class="save" onclick="salvar()">Salvar</button>
+<textarea id="cronograma"></textarea><br>
+<button class="save" onclick="salvar()">Salvar Nova Versão</button>
+<button class="nav" onclick="versaoAnterior()">⬅ Versão Anterior</button>
+<button class="nav" onclick="proximaVersao()">Versão Seguinte ➡</button>
+<button class="restore" onclick="restaurarVersao()">Restaurar</button>
+<p id="infoVersao"></p>
 </div>
 
 <div class="card">
-<h2 id="diaAtual"></h2>
-<p id="atividade"></p>
-
-<div class="timer">🔢 Matemática <span id="mat"></span></div>
-<button class="start" onclick="start('mat',11700)">Iniciar</button>
-<button class="pause" onclick="pause('mat')">Pausar</button>
-
-<div class="timer">📚 Português <span id="port"></span></div>
-<button class="start" onclick="start('port',5400)">Iniciar</button>
-<button class="pause" onclick="pause('port')">Pausar</button>
-
-<div class="timer">🔁 Revisão <span id="rev"></span></div>
-<button class="start" onclick="start('rev',900)">Iniciar</button>
-<button class="pause" onclick="pause('rev')">Pausar</button>
-
-<button class="done" onclick="concluirDia()">Concluir Dia</button>
-
-<p id="status"></p>
-</div>
-
-<div class="card">
-<h3>📅 Calendário de Cumprimento</h3>
+<h3>📅 Calendário</h3>
+<h4 id="mesAno"></h4>
 <div class="calendar" id="calendar"></div>
 </div>
 
 <script>
 
-const inicio = new Date("2026-02-22");
-let intervalos = {};
-let tempoEstudadoHoje = 0;
-
-function formatar(seg){
-let h=Math.floor(seg/3600);
-let m=Math.floor((seg%3600)/60);
-let s=seg%60;
-return (h<10?"0":"")+h+":"+(m<10?"0":"")+m+":"+(s<10?"0":"")+s;
-}
-
-function start(id,meta){
-if(!intervalos[id]){
-let tempo=parseInt(localStorage.getItem(id))||meta;
-intervalos[id]=setInterval(()=>{
-if(tempo>0){
-tempo--;
-tempoEstudadoHoje++;
-document.getElementById(id).innerText=formatar(tempo);
-localStorage.setItem(id,tempo);
-}
-},1000);
-}
-}
-
-function pause(id){
-clearInterval(intervalos[id]);
-intervalos[id]=null;
-}
-
-function concluirDia(){
-let minimo=4.5*3600;
-if(tempoEstudadoHoje<minimo){
-document.getElementById("status").innerHTML="<span class='red'>Tempo mínimo não atingido (4h30)</span>";
-return;
-}
-marcarCalendario();
-document.getElementById("status").innerHTML="<span class='green'>MISSÃO CUMPRIDA</span>";
-}
+const prova = new Date("2026-03-21T08:00:00");
+let versoes = JSON.parse(localStorage.getItem("versoes")) || [];
+let indiceAtual = versoes.length - 1;
 
 function salvar(){
-localStorage.setItem("cronograma",document.getElementById("cronograma").value);
-atualizarDia();
+let texto = document.getElementById("cronograma").value;
+let novaVersao = {
+texto:texto,
+data:new Date().toLocaleString()
+};
+versoes.push(novaVersao);
+localStorage.setItem("versoes",JSON.stringify(versoes));
+indiceAtual = versoes.length - 1;
+mostrarInfoVersao();
 }
 
-function atualizarDia(){
-let texto=localStorage.getItem("cronograma")||"";
-let linhas=texto.split("\n");
-let hoje=new Date();
-let diff=Math.floor((hoje-inicio)/(1000*60*60*24));
-if(diff<0) diff=0;
-if(diff>=linhas.length) diff=linhas.length-1;
-document.getElementById("diaAtual").innerText="Dia "+(diff+1);
-document.getElementById("atividade").innerText=linhas[diff]||"";
+function versaoAnterior(){
+if(indiceAtual>0){indiceAtual--;mostrarInfoVersao();}
+}
+
+function proximaVersao(){
+if(indiceAtual<versoes.length-1){indiceAtual++;mostrarInfoVersao();}
+}
+
+function restaurarVersao(){
+if(versoes[indiceAtual]){
+document.getElementById("cronograma").value=versoes[indiceAtual].texto;
+}
+}
+
+function mostrarInfoVersao(){
+if(versoes[indiceAtual]){
+document.getElementById("infoVersao").innerText=
+"Versão "+(indiceAtual+1)+" - "+versoes[indiceAtual].data;
+}
 }
 
 function gerarCalendario(){
-let cal=document.getElementById("calendar");
+let hoje = new Date();
+let ano = hoje.getFullYear();
+let mes = hoje.getMonth();
+let primeiroDia = new Date(ano,mes,1).getDay();
+let ultimoDia = new Date(ano,mes+1,0).getDate();
+
+document.getElementById("mesAno").innerText=
+hoje.toLocaleString('pt-BR',{month:'long'})+" "+ano;
+
+let cal = document.getElementById("calendar");
 cal.innerHTML="";
-for(let i=0;i<28;i++){
-let d=document.createElement("div");
-d.className="day";
-d.innerText=i+1;
-if(localStorage.getItem("done"+i)) d.classList.add("doneDay");
-cal.appendChild(d);
+
+for(let i=0;i<primeiroDia;i++){
+let vazio=document.createElement("div");
+cal.appendChild(vazio);
+}
+
+for(let d=1;d<=ultimoDia;d++){
+let dia=document.createElement("div");
+dia.className="day";
+dia.innerText=d;
+
+if(d===hoje.getDate()) dia.classList.add("today");
+if(localStorage.getItem("done-"+ano+"-"+mes+"-"+d))
+dia.classList.add("doneDay");
+
+dia.onclick=function(){
+localStorage.setItem("done-"+ano+"-"+mes+"-"+d,true);
+dia.classList.add("doneDay");
+}
+
+cal.appendChild(dia);
 }
 }
 
-function marcarCalendario(){
-let hoje=new Date();
-let diff=Math.floor((hoje-inicio)/(1000*60*60*24));
-localStorage.setItem("done"+diff,true);
-gerarCalendario();
+function atualizarCountdown(){
+let agora=new Date();
+let diff=prova-agora;
+if(diff<0){document.getElementById("countdown").innerText="PROVA REALIZADA";return;}
+let dias=Math.floor(diff/(1000*60*60*24));
+let horas=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+let min=Math.floor((diff%(1000*60*60))/(1000*60));
+let seg=Math.floor((diff%(1000*60))/1000);
+document.getElementById("countdown").innerText=
+"⏳ Faltam "+dias+"d "+horas+"h "+min+"m "+seg+"s";
 }
 
 window.onload=function(){
-atualizarDia();
+if(versoes.length>0){
+document.getElementById("cronograma").value=
+versoes[versoes.length-1].texto;
+mostrarInfoVersao();
+}
 gerarCalendario();
-["mat","port","rev"].forEach((id,i)=>{
-let metas=[11700,5400,900];
-let tempo=parseInt(localStorage.getItem(id))||metas[i];
-document.getElementById(id).innerText=formatar(tempo);
-});
+atualizarCountdown();
+setInterval(atualizarCountdown,1000);
 }
 
 </script>
